@@ -1,2 +1,2 @@
-# rolscraper
-Tool for scraping jobs off Recruitment Online, the website where Victorian Government School jobs are advertised.
+# schooljobsvicscraper
+Tool for scraping jobs off School Jobs Vic (Recruitment Online), the website where Victorian Government School jobs are advertised.
