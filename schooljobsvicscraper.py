@@ -1,4 +1,4 @@
-# Copyright 2025 rolscraper authors
+# Copyright 2025 schooljobsvicscraper authors
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,15 +26,10 @@ import pandas as pd
 
 urllib3.disable_warnings()
 
-
 regions = ['North-Eastern Victoria Region',
            'North-Western Victoria Region',
            'South-Western Victoria Region',
            'South-Eastern Victoria Region']
-
-
-s = requests.Session()
-
 
 def get_icsid(r: str) -> str:
      # extract ICSID 
@@ -51,7 +46,7 @@ def get_statenum(r: str) -> str:
     return statenum
 
 def get_statenum_after_action(r: str) -> str:
-    pattern = "ICStateNum\.value=(?P<statenum>[0-9]*?);"
+    pattern = "ICStateNum\\.value=(?P<statenum>[0-9]*?);"
     m = re.search(pattern, r.text)
     statenum = m.group('statenum')
     return statenum
@@ -230,7 +225,7 @@ def close_subject_duties_payload(icsid, statenum):
            "ICAppClsData":"",
           }
 
-def get_next_job_payload(icsid, statenum):
+def get_next_job_payload(icsid: str, statenum: str) -> dict:
     return {"ICAJAX":1,
            "ICNAVTYPEDROPDOWN": 0,
            "ICType":"Panel",
@@ -295,6 +290,8 @@ def get_next_provisional_appointments_payload(icsid, statenum):
           }
 
 def download_jobs(output_dir:str, max_jobs_per_region:int = 300, found_in_last_run_limit:int = 40):
+    s = requests.Session()
+
     jobs_files = glob.glob(f"{output_dir}/recruitment online jobs [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*.csv")
     last_run_job_ids = []
     for i in range(-1,-14,-1):
@@ -336,7 +333,7 @@ def download_jobs(output_dir:str, max_jobs_per_region:int = 300, found_in_last_r
         new_found_after_prev_found = 0
         for i in range(max_jobs_per_region):
             # get job details
-            pattern="id='HRS_SCH_WRK2_POSTING_TITLE' >(?P<jobtitle>.*?)</span>.*?id='HRS_SCH_WRK2_HRS_JOB_OPENING_ID' >(?P<jobid>[0-9]*?)</span>.*?id='HRS_SCH_WRK_HRS_DESCRLONG' >(?P<location>.*?)</span>.*?id='DERIVED_ER_DOE_DESCR\$191\$' >(?P<department>.*?)</span>.*?id='DOE_JO_WRF_DESCRLONG' >(?P<roletype>.*?)</span>.*?id='HRS_SCH_WRK_HRS_FULL_PART_TIME\$75\$' >(?P<fullorparttime>.*?)</span>.*?id='HRS_SCH_WRK_HRS_REG_TEMP\$76\$' >(?P<ongoingorfixedterm>.*?)</span>.*?id='HRS_JOBCODE_I_DESCR' >(?P<classification>.*?)</span>.*?id='DERIVED_ER_DOE_HRS_JO_PST_CLS_DT' >(?P<applyby>.*?)</span>.*?id='HRS_WRK2_BEGIN_DT' >(?P<begindate>.*?)</span>.*?id='HRS_WRK2_END_DT' >(?P<enddate>.*?)</span>.*?id='HRS_WRK2_STD_HOURS' >(?P<hours>.*?)</span>.*?id='DERIVED_ER_DOE_CONTACT_NAME' >(?P<contactname>.*?)</span>.*?id='DERIVED_ER_DOE_CONTACTPHONENBR' >(?P<phone>.*?)</span>.*?id='DERIVED_ER_DOE_CONTACTURL' >(?P<schoolwebsite>.*?)</span>"
+            pattern="id='HRS_SCH_WRK2_POSTING_TITLE' >(?P<jobtitle>.*?)</span>.*?id='HRS_SCH_WRK2_HRS_JOB_OPENING_ID' >(?P<jobid>[0-9]*?)</span>.*?id='HRS_SCH_WRK_HRS_DESCRLONG' >(?P<location>.*?)</span>.*?id='DERIVED_ER_DOE_DESCR\\$191\\$' >(?P<department>.*?)</span>.*?id='DOE_JO_WRF_DESCRLONG' >(?P<roletype>.*?)</span>.*?id='HRS_SCH_WRK_HRS_FULL_PART_TIME\\$75\\$' >(?P<fullorparttime>.*?)</span>.*?id='HRS_SCH_WRK_HRS_REG_TEMP\\$76\\$' >(?P<ongoingorfixedterm>.*?)</span>.*?id='HRS_JOBCODE_I_DESCR' >(?P<classification>.*?)</span>.*?id='DERIVED_ER_DOE_HRS_JO_PST_CLS_DT' >(?P<applyby>.*?)</span>.*?id='HRS_WRK2_BEGIN_DT' >(?P<begindate>.*?)</span>.*?id='HRS_WRK2_END_DT' >(?P<enddate>.*?)</span>.*?id='HRS_WRK2_STD_HOURS' >(?P<hours>.*?)</span>.*?id='DERIVED_ER_DOE_CONTACT_NAME' >(?P<contactname>.*?)</span>.*?id='DERIVED_ER_DOE_CONTACTPHONENBR' >(?P<phone>.*?)</span>.*?id='DERIVED_ER_DOE_CONTACTURL' >(?P<schoolwebsite>.*?)</span>"
             m = re.search(pattern, r.text, flags=re.DOTALL)
             if not m:
                 break
@@ -364,7 +361,7 @@ def download_jobs(output_dir:str, max_jobs_per_region:int = 300, found_in_last_r
                 statenum = get_statenum(r)
 
                 # subjects/duties row pattern
-                pattern = """<tr.*?id='DOE_SUBJDUTY_VW_JPM_DESCR90\$[0-9]*' >(?P<subjectduty>.*?)</span>.*?id='DOE_SUBJDUTY_VW_JPM_PROMPT_3\$[0-9]*' >(?P<level>.*?)</span>.*?</tr>"""
+                pattern = """<tr.*?id='DOE_SUBJDUTY_VW_JPM_DESCR90\\$[0-9]*' >(?P<subjectduty>.*?)</span>.*?id='DOE_SUBJDUTY_VW_JPM_PROMPT_3\\$[0-9]*' >(?P<level>.*?)</span>.*?</tr>"""
                 ms = re.findall(pattern,r.text, flags=re.DOTALL)
                 subjectduties = [{"subjectduty":subjectduty, "level":level} for subjectduty,level in ms]
                 record["subjectduties"] = subjectduties
@@ -398,7 +395,7 @@ def download_provisional_appointments(output_dir:str):
     records = []
 
     url = "https://edupay.eduweb.vic.gov.au/psc/EDUPPRD1_EA/APPLICANT/HRMS/c/DOE_MENU_HRS.DOE_HRS_PROV_APPNT.GBL?Page=DOE_HRS_PROV_APPNT"
-    prov_appointments_pattern = "id='DOE_HRS_PROV_AP_HRS_JOB_OPENING_ID\$[0-9]*' >(?P<jobid>[0-9]*)</span>.*?id='DOE_HRS_PROV_AP_SCHOOL\$[0-9]*' >(?P<school>.*?)</span>.*?id='DOE_HRS_PROV_AP_HRS_PRM_PST_TITLE\$[0-9]*' >(?P<jobtitle>.*?)</span>.*?id='DOE_HRS_PROV_AP_JOBCODE\$[0-9]*' >(?P<jobclass>.*?)</span>.*?id='DOE_HRS_PROV_AP_NAME_DISPLAY\$[0-9]*' >(?P<applicant>.*?)</span>.*?id='DOE_HRS_PROV_AP_CLOSE_DT\$[0-9]*' >(?P<grievanceclosedate>.*?)</span>"
+    prov_appointments_pattern = "id='DOE_HRS_PROV_AP_HRS_JOB_OPENING_ID\\$[0-9]*' >(?P<jobid>[0-9]*)</span>.*?id='DOE_HRS_PROV_AP_SCHOOL\\$[0-9]*' >(?P<school>.*?)</span>.*?id='DOE_HRS_PROV_AP_HRS_PRM_PST_TITLE\\$[0-9]*' >(?P<jobtitle>.*?)</span>.*?id='DOE_HRS_PROV_AP_JOBCODE\\$[0-9]*' >(?P<jobclass>.*?)</span>.*?id='DOE_HRS_PROV_AP_NAME_DISPLAY\\$[0-9]*' >(?P<applicant>.*?)</span>.*?id='DOE_HRS_PROV_AP_CLOSE_DT\\$[0-9]*' >(?P<grievanceclosedate>.*?)</span>"
 
     r = s.get(url)
     icsid = get_icsid(r)
@@ -429,14 +426,10 @@ def download_provisional_appointments(output_dir:str):
     print(f"{now} Provisional appointments downloaded.")
     
 if __name__ == "__main__":
-#   config_file = "config.toml"
-#   with open(config_file, "rb") as f:
-#       config = tomli.load(f)
-    config = {}
-    config['output_dir'] = "./exports"
-    config['max_jobs_per_region'] = 300
-    config['found_in_last_run_limit'] = 40
-    
+    config_file = "config.toml"
+    with open(config_file, "rb") as f:
+       config = tomli.load(f)
+        
     if not os.path.exists(config['output_dir']):
         os.makedirs(config['output_dir'])
     
